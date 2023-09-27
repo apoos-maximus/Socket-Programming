@@ -1,0 +1,2 @@
+#define SOCK_TOOL_PORT 6006
+#define SOCK_TOOL_MAX_CONN 1
