@@ -4,7 +4,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include "common.h"
+#include "socktoolspec.h"
 
+#define SERVER_ADDRESS "172.16.242.129"
+#define BUFLEN 128
 
 
 
@@ -45,7 +48,20 @@ int main(){
     inet_ntop(paddr->sin_family, &paddr->sin_addr, ipstr, 20);
     print_family(paddr->sin_family);
     LOG_INFO("Address : %s", ipstr);
-
+    
+    //connect
+    struct sockaddr serveraddr;
+    struct sockaddr_in *pservaddr = &serveraddr;
+    pservaddr->sin_family = AF_INET;
+    pservaddr->sin_port = htons(SOCK_TOOL_PORT);
+    inet_pton(AF_INET, SERVER_ADDRESS, &pservaddr->sin_addr);
+    status = connect(sockfd, &serveraddr, sizeof(serveraddr));
+    if (status == 0){
+        LOG_INFO("connect() succeeded");
+    } else {
+        err_quit("connect() failed with %d", status);
+    }
+    
     // getpeername
     status = getpeername(sockfd, &addr, &sz);
     if(status == 0){
@@ -58,7 +74,20 @@ int main(){
     inet_ntop(paddr->sin_family, &paddr->sin_addr, ipstr, 20);
     print_family(paddr->sin_family);
     LOG_INFO("Address : %s", ipstr);
-    
 
+    //data transfer
+    for (;;){
+        char buf[BUFLEN];
+        buf[0] = 'A';
+        status = send(sockfd, buf, BUFLEN, MSG_CONFIRM);
+        if(status < 0){
+            err_quit("send() failed with %d", status);
+        } else {
+            LOG_INFO("send() succeeded with %d", status);
+        }
+        sleep(1);
+    }    
+    
+    
     return 0;
 }

@@ -6,6 +6,8 @@
 #include "common.h"
 #include "socktoolspec.h"
 
+#define BUFLEN 128
+
 int main(){
     common_function();
     printf("Server Functions . . .  !\n");
@@ -56,6 +58,22 @@ int main(){
     //     LOG_INFO("Server listening . . .");
     // }
 
-
+    ssize_t nbytes = 0;
+    char buf[BUFLEN];
+    struct sockaddr peeraddr;
+    struct sockaddr_in *peeraddrptr = &peeraddr;
+    socklen_t peeraddrlen;
+    for (;;){
+        nbytes = recvfrom(sockfd, buf, BUFLEN, 0, &peeraddr, &peeraddrlen);
+        if (nbytes < 0) {
+            LOG_INFO("Error during recieve");
+        } else if (nbytes == 0) {
+            LOG_INFO("No messages available");
+        } else {
+            LOG_INFO("Recieved %d bytes", nbytes);
+            // parse_and_print_pkt(peeradptr, peeraddrlen, buf, nbytes);
+        }
+    }
+    
     return 0;
 }
