@@ -6,11 +6,19 @@
 #include "common.h"
 #include "socktoolspec.h"
 
-#define BUFLEN 128
 
-int main(){
-    common_function();
-    printf("Server Functions . . .  !\n");
+static void print_usage() {
+    printf("./server X.X.X.X [AF_INET]\n");
+}
+
+int main(int argc, char* argv[]){
+    // common_function();
+    // printf("Server Functions . . .  !\n");
+
+    if (argc < 2) {
+        print_usage();
+        err_quit("supply server address");
+    }
 
     int sockfd;
     int status  = 0;
@@ -25,7 +33,7 @@ int main(){
     struct sockaddr_in *paddr = &addr;
     char ipstr[20];
     paddr->sin_port = htons(SOCK_TOOL_PORT);
-    inet_pton(AF_INET, "172.16.242.129", &paddr->sin_addr);
+    inet_pton(AF_INET, argv[1], &paddr->sin_addr);
     paddr->sin_family = AF_INET;
     socklen_t sz = sizeof(addr);
     status = bind(sockfd, &addr, sz);
@@ -59,19 +67,18 @@ int main(){
     // }
 
     ssize_t nbytes = 0;
-    char buf[BUFLEN];
+    char buf[MAX_UDP_PAYLOAD_LEN];
     struct sockaddr peeraddr;
-    struct sockaddr_in *peeraddrptr = &peeraddr;
     socklen_t peeraddrlen;
     for (;;){
-        nbytes = recvfrom(sockfd, buf, BUFLEN, 0, &peeraddr, &peeraddrlen);
+        nbytes = recvfrom(sockfd, buf, MAX_UDP_PAYLOAD_LEN, 0, &peeraddr, &peeraddrlen);
         if (nbytes < 0) {
             LOG_INFO("Error during recieve");
         } else if (nbytes == 0) {
             LOG_INFO("No messages available");
         } else {
-            LOG_INFO("Recieved %d bytes", nbytes);
-            // parse_and_print_pkt(peeradptr, peeraddrlen, buf, nbytes);
+            // LOG_INFO("Recieved %d bytes", nbytes);
+            parse_request(&peeraddr, peeraddrlen, buf, nbytes);
         }
     }
     

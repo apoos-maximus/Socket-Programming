@@ -3,17 +3,27 @@
 // #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <unistd.h>
 #include "common.h"
 #include "socktoolspec.h"
 
-#define SERVER_ADDRESS "172.16.242.129"
-#define BUFLEN 128
 
 
+static void print_usage() {
+    printf("./client X.X.X.X[AF_INET]  Y.Y.Y.Y[AF_INET] \n");
+    printf("X - client if addr\n");
+    printf("Y - server addr");
+}
 
-int main(){
-    common_function();
-    LOG_INFO("client functions . . .!");
+int main(int argc, char* argv[]){
+    // common_function();
+    // LOG_INFO("client functions . . .!");
+
+    if (argc < 3) {
+        print_usage();
+        err_quit("supply all arguments");
+    }
+
     int status = 0;
     int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sockfd == -1){
@@ -26,7 +36,7 @@ int main(){
     struct sockaddr_in *paddr = &addr;
     char ipstr[20];
     // paddr->sin_port = htons(6001);
-    inet_pton(AF_INET, "192.168.1.3", &paddr->sin_addr);
+    inet_pton(AF_INET, argv[1], &paddr->sin_addr);
     paddr->sin_family = AF_INET;
     socklen_t sz = sizeof(addr);
 
@@ -54,7 +64,7 @@ int main(){
     struct sockaddr_in *pservaddr = &serveraddr;
     pservaddr->sin_family = AF_INET;
     pservaddr->sin_port = htons(SOCK_TOOL_PORT);
-    inet_pton(AF_INET, SERVER_ADDRESS, &pservaddr->sin_addr);
+    inet_pton(AF_INET, argv[2], &pservaddr->sin_addr);
     status = connect(sockfd, &serveraddr, sizeof(serveraddr));
     if (status == 0){
         LOG_INFO("connect() succeeded");
@@ -76,15 +86,21 @@ int main(){
     LOG_INFO("Address : %s", ipstr);
 
     //data transfer
+    char *buf = NULL;
+    int pkt_len = 0;
+    int i = 0;
+    int ids = 0;
+    request_type tp = HELLO;
     for (;;){
-        char buf[BUFLEN];
-        buf[0] = 'A';
-        status = send(sockfd, buf, BUFLEN, MSG_CONFIRM);
+        pkt_len = prepare_pkt(&buf, tp, ids);
+        status = send(sockfd, buf, pkt_len, MSG_CONFIRM);
         if(status < 0){
             err_quit("send() failed with %d", status);
         } else {
-            LOG_INFO("send() succeeded with %d", status);
+            LOG_PKT ("%d  %s msgid: %d", status, type_to_str(tp), ids);
+            // LOG_INFO("send() succeeded with %d", status);
         }
+        ids++;
         sleep(1);
     }    
     

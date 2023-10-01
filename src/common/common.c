@@ -2,7 +2,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "common.h"
 
 #define MAXLINE 4096
@@ -44,6 +45,18 @@ log_print_it(const char *fmt, va_list ap, const char* file_name, const char* fun
     fflush(NULL);
 }
 
+static void 
+log_print_pkt(const char *fmt, va_list ap)
+{
+    char buf[MAXLINE];
+    char buf1[2*MAXLINE];
+    vsnprintf(buf, MAXLINE-1, fmt, ap);
+    snprintf(buf1, MAXLINE*2, "LOG_PKT:  %s\n", buf);
+    fflush(stdout);
+    fputs(buf1, stdout);
+    fflush(NULL);
+}
+
 /*
  * Fatal error unrelated to a system call.
  * Print a message and terminate.
@@ -67,6 +80,14 @@ void log_info (const char* file_name, const char* func_name, int line_num, const
     va_end(ap);    
 }
 
+void log_pkt (const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap,fmt);
+    log_print_pkt(fmt, ap);
+    va_end(ap); 
+}
+
 void print_family(int family_af){
     
     switch (family_af)
@@ -86,4 +107,39 @@ void print_family(int family_af){
     default:
         LOG_INFO("Family: unknown");
     }
+}
+
+char* type_to_str(request_type type) {
+    switch(type){
+        case HELLO : 
+            return "HELLO";
+            break;
+        default :
+            return "UNKNOWN";
+            break;
+    }
+}
+
+
+int prepare_pkt(char **buf, request_type type, uint32_t msgid) {
+    request_pkt *pkt = (request_pkt*)calloc(1, sizeof(request_pkt));
+    pkt->type = type;
+    pkt->msgid = msgid;
+    *buf = (char*)pkt;
+    return sizeof(request_pkt);
+}
+
+request_type parse_request(struct sockaddr *peeraddr, socklen_t peeraddrlen, char *buf, int nbytes) {
+
+
+    request_pkt *req = (request_type*)buf;
+    char ipstr[20];
+    struct sockaddr_in *paddr = peeraddr;
+    inet_ntop(paddr->sin_family, &paddr->sin_addr, ipstr, peeraddrlen);
+
+    LOG_PKT("%d %s:%d   %s  msgid:%d", nbytes,
+                                        ipstr, ntohs(paddr->sin_port),
+                                        type_to_str(req->type), req->msgid);
+    
+    return HELLO;
 }
