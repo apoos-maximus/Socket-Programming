@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "common.h"
 #include "socktoolspec.h"
 
@@ -90,15 +91,28 @@ int main(int argc, char* argv[]){
     int pkt_len = 0;
     int i = 0;
     int ids = 0;
-    request_type tp = HELLO;
+    request_type tp = PING;
+    char hostname[HOSTNAME_LEN];
+    status = gethostname(hostname, HOSTNAME_LEN);
+
+    int recvbytes = 0;
+    char recvbuf[MAX_UDP_PAYLOAD_LEN];
+    struct sockaddr peeraddr;
+    socklen_t peeraddrlen;
+
+    if (status < 0) {
+        err_quit("gethostname() failed");
+    }
     for (;;){
-        pkt_len = prepare_pkt(&buf, tp, ids);
-        status = send(sockfd, buf, pkt_len, MSG_CONFIRM);
+        pkt_len = prepare_pkt(&buf, tp, ids, hostname);
+        status = send(sockfd, buf, pkt_len, 0);
         if(status < 0){
             err_quit("send() failed with %d", status);
         } else {
-            LOG_PKT ("%d  %s msgid: %d", status, type_to_str(tp), ids);
-            // LOG_INFO("send() succeeded with %d", status);
+            free(buf);
+            peeraddrlen = sizeof(struct sockaddr);
+            recvbytes = recvfrom(sockfd, recvbuf, MAX_UDP_PAYLOAD_LEN, 0, &peeraddr, &peeraddrlen);
+            parse_reply(&peeraddr, peeraddrlen, recvbuf, recvbytes);
         }
         ids++;
         sleep(1);

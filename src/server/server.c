@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include "common.h"
 #include "socktoolspec.h"
 
@@ -69,8 +70,15 @@ int main(int argc, char* argv[]){
     ssize_t nbytes = 0;
     char buf[MAX_UDP_PAYLOAD_LEN];
     struct sockaddr peeraddr;
-    socklen_t peeraddrlen;
+    socklen_t peeraddrlen = 0;
+
+    ssize_t send_bytes = 0;
+    char *send_buf = NULL;
+    int send_pkt_len = 0;
+
     for (;;){
+        
+        peeraddrlen = sizeof(struct sockaddr);
         nbytes = recvfrom(sockfd, buf, MAX_UDP_PAYLOAD_LEN, 0, &peeraddr, &peeraddrlen);
         if (nbytes < 0) {
             LOG_INFO("Error during recieve");
@@ -78,7 +86,15 @@ int main(int argc, char* argv[]){
             LOG_INFO("No messages available");
         } else {
             // LOG_INFO("Recieved %d bytes", nbytes);
+
             parse_request(&peeraddr, peeraddrlen, buf, nbytes);
+            send_pkt_len = prepare_reply(buf, nbytes, &send_buf);
+            send_bytes = sendto(sockfd, send_buf, send_pkt_len, 0,
+                                &peeraddr, peeraddrlen);
+            if(send_bytes < 0){
+                err_quit("send() failed with %d", send_bytes);
+            }
+            free(send_buf);
         }
     }
     

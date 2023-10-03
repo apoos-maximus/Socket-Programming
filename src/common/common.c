@@ -111,8 +111,11 @@ void print_family(int family_af){
 
 char* type_to_str(request_type type) {
     switch(type){
-        case HELLO : 
-            return "HELLO";
+        case PING : 
+            return "PING-REQ";
+            break;
+        case PING_REPLY :
+            return "PING_REPLY";
             break;
         default :
             return "UNKNOWN";
@@ -121,25 +124,49 @@ char* type_to_str(request_type type) {
 }
 
 
-int prepare_pkt(char **buf, request_type type, uint32_t msgid) {
+int prepare_pkt(char **buf, request_type type, uint32_t msgid, char *hostname) {
     request_pkt *pkt = (request_pkt*)calloc(1, sizeof(request_pkt));
     pkt->type = type;
     pkt->msgid = msgid;
     *buf = (char*)pkt;
+    strncpy(pkt->hostname, hostname, HOSTNAME_LEN);
     return sizeof(request_pkt);
 }
 
-request_type parse_request(struct sockaddr *peeraddr, socklen_t peeraddrlen, char *buf, int nbytes) {
+int prepare_reply(char *request, int req_len, char **reply) {
+    request_pkt *req_pkt = (request_pkt*)request;
+    reply_pkt *rep_pkt = (reply_pkt*)calloc(1, sizeof(reply_pkt));
+    rep_pkt->type = PING_REPLY;
+    rep_pkt->msgig = req_pkt->msgid;
+    strncpy(rep_pkt->message, "Reply from Server", REPLY_MSG_LEN);
+    *reply = (char*)rep_pkt;
+    return sizeof(reply_pkt);
+}
 
+void parse_request(struct sockaddr *peeraddr, socklen_t peeraddrlen, char *buf, int nbytes) {
 
-    request_pkt *req = (request_type*)buf;
+    request_pkt *req = (request_pkt*)buf;
     char ipstr[20];
     struct sockaddr_in *paddr = peeraddr;
     inet_ntop(paddr->sin_family, &paddr->sin_addr, ipstr, peeraddrlen);
 
-    LOG_PKT("%d %s:%d   %s  msgid:%d", nbytes,
-                                        ipstr, ntohs(paddr->sin_port),
-                                        type_to_str(req->type), req->msgid);
-    
-    return HELLO;
+    LOG_PKT("%d %s:%d   %s   %s  msgid:%d", nbytes,
+                                            ipstr, ntohs(paddr->sin_port),
+                                            req->hostname,
+                                            type_to_str(req->type), 
+                                            req->msgid);
+}
+
+void parse_reply(struct sockaddr *peeraddr, socklen_t peeraddrlen, char *buf, int nbytes) {
+
+    reply_pkt *rep = (reply_pkt*) buf;
+    char ipstr[20];
+    struct sockaddr_in *paddr = (struct sockaddr_in*)peeraddr;
+    inet_ntop(paddr->sin_family, &paddr->sin_addr, ipstr, peeraddrlen);
+
+    LOG_PKT("%d bytes from %s:%d  %s  %s  msgid:%d", nbytes,
+                                                     ipstr, ntohs(paddr->sin_port),
+                                                     rep->message,
+                                                     type_to_str(rep->type),
+                                                     rep->msgig);
 }
