@@ -1,14 +1,21 @@
-#include <stdio.h>
-#include <sys/socket.h>
-// #include <sys/types.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include "common.h"
 #include "socktoolspec.h"
+#ifdef WINDOWS
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+#else
+    #include <sys/socket.h>
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+    #include <unistd.h>
+#endif
+#include <stdio.h>
+#include <stdlib.h>
 
 
+#ifdef WINDOWS
+    #pragma comment(lib, "Ws2_32.lib")
+#endif
 
 static void print_usage() {
     printf("./client X.X.X.X[AF_INET]  Y.Y.Y.Y[AF_INET] \n");
@@ -115,7 +122,7 @@ int main(int argc, char* argv[]){
             parse_reply(&peeraddr, peeraddrlen, recvbuf, recvbytes);
         }
         ids++;
-        sleep(1);
+        sleep_a(1);
     }    
     
     

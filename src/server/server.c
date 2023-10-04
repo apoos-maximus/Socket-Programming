@@ -1,12 +1,25 @@
-#include <stdio.h>
-#include <errno.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
 #include "common.h"
 #include "socktoolspec.h"
+#ifdef WINDOWS
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <stdint.h>
+    #if defined(_MSC_VER)
+        #include <BaseTsd.h>
+        typedef SSIZE_T ssize_t;
+    #endif
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+#endif
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
+#ifdef WINDOWS
+    #pragma comment(lib, "Ws2_32.lib")
+#endif
 
 static void print_usage() {
     printf("./server X.X.X.X [AF_INET]\n");

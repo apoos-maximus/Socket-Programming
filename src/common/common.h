@@ -1,4 +1,18 @@
-#include <sys/socket.h>
+#include "socktoolspec.h"
+
+#ifdef WINDOWS
+    #include <stdint.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <synchapi.h>
+#else
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <sys/socket.h>
+#endif
+
+
+
 
 #define LOG_INFO(...) (log_info(__FILE__, __func__, __LINE__, __VA_ARGS__))
 #define LOG_PKT(...) (log_pkt(__VA_ARGS__))
@@ -12,6 +26,8 @@ void log_info (const char* file_name, const char* func_name, int line_num, const
 void log_pkt (const char *fmt, ...);
 
 void print_family(int family_af);
+
+void sleep_a(uint32_t seconds);
 
 typedef enum request_type {
     PING,

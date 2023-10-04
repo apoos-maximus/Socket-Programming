@@ -1,10 +1,10 @@
+#include "common.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "common.h"
+
+
 
 #define MAXLINE 4096
 
@@ -107,6 +107,16 @@ void print_family(int family_af){
     default:
         LOG_INFO("Family: unknown");
     }
+}
+
+void sleep_a(uint32_t seconds) {
+
+#ifdef WINDOWS
+    Sleep(seconds * 1000);
+#else
+    sleep(seconds);
+#endif
+
 }
 
 char* type_to_str(request_type type) {
