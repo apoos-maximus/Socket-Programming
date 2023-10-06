@@ -1,8 +1,14 @@
 #include "common.h"
 #include "socktoolspec.h"
 #ifdef WINDOWS
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+
+    #include <windows.h>
     #include <winsock2.h>
     #include <ws2tcpip.h>
+    #include <iphlpapi.h>
 #else
     #include <sys/socket.h>
     #include <arpa/inet.h>
@@ -26,6 +32,16 @@ static void print_usage() {
 int main(int argc, char* argv[]){
     // common_function();
     // LOG_INFO("client functions . . .!");
+
+#ifdef WINDOWS
+    WSADATA wsaData;
+    // Initialize Winsock
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed with error: %d\n", iResult);
+        return 1;
+    }
+#endif
 
     if (argc < 3) {
         print_usage();
@@ -125,6 +141,9 @@ int main(int argc, char* argv[]){
         sleep_a(1);
     }    
     
+#ifdef WINDOWS
+    WSACleanup();
+#endif
     
     return 0;
 }
