@@ -25,14 +25,14 @@ set (common_files
      ${common_dir}/common.c)
 
 set (client_files 
-     ${client_dir}/client.c)
+     ${client_dir}/udp_client.c)
 
 set (server_files
-     ${server_dir}/server.c)
+     ${server_dir}/udp_server.c)
 
 
 include_directories(${CMAKE_SOURCE_DIR}/include ${common_dir})
 
 # print_all_variables()
-add_executable(client ${client_files} ${common_files})
-add_executable(server ${server_files} ${common_files})
+add_executable(udp_client ${client_files} ${common_files})
+add_executable(udp_server ${server_files} ${common_files})
