@@ -11,7 +11,7 @@ macro(print_all_variables)
     message(STATUS "print_all_variables------------------------------------------}")
 endmacro()
 
-set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall  -std=c++14")
+set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++14")
 
 # print_all_variables ()
 

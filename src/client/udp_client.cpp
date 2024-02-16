@@ -17,6 +17,8 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <pthread.h>
 #include <unordered_set>
 
 
@@ -30,9 +32,84 @@ static void print_usage() {
     printf("Y - server addr\n");
 }
 
+struct sync_index {
+    std::unordered_set<int> dtbl;
+};
+
+
+sync_index sindex;
+
+pthread_t send_thread;
+pthread_t receive_thread;
+
+
+void handle_signal(int sig){
+    pthread_cancel(send_thread);
+    pthread_cancel(receive_thread);
+
+    exit(0);
+}
+
+void* send_func(void *sockfdptr){
+    
+    int sockfd = *(int*)sockfdptr;
+    //data transfer
+    char *buf = NULL;
+    int pkt_len = 0;
+    int ids = 0;
+    request_type tp = PING;
+    int status = 0;
+    char hostname[HOSTNAME_LEN];
+    LOG_INFO("HOLA");
+    
+    status = gethostname(hostname, HOSTNAME_LEN);
+    if (status < 0) {
+        err_quit("gethostname() failed");
+    }
+    LOG_INFO("HOLA");
+    LOG_INFO("sockfd %d", sockfd);
+    while(true){
+        pkt_len = prepare_pkt(&buf, tp, ids, hostname);
+        status = send(sockfd, buf, pkt_len, 0);
+        if(status < 0){
+            err_quit("send() failed with %d", status);
+        } else {
+            free(buf);
+            sindex.dtbl.insert(ids);
+
+        }
+        ids++;
+        sleep_a(1);
+    }
+}
+
+void* receive_func(void *sockfdptr){
+
+    int sockfd = *(int*)sockfdptr;
+    int recvbytes = 0;
+    char recvbuf[MAX_UDP_PAYLOAD_LEN];
+    struct sockaddr peeraddr;
+    socklen_t peeraddrlen;
+    peeraddrlen = sizeof(struct sockaddr);
+
+    while(true){
+        recvbytes = recvfrom(sockfd, recvbuf, MAX_UDP_PAYLOAD_LEN, 0, &peeraddr, &peeraddrlen);
+        reply_pkt *pkt = (reply_pkt*)recvbuf;
+        std::unordered_set<int>::iterator itr = sindex.dtbl.find(pkt->msgig);
+        if (itr  != sindex.dtbl.end()){
+            sindex.dtbl.erase(itr);
+            parse_reply(&peeraddr, peeraddrlen, recvbuf, recvbytes);
+        }
+    }
+
+
+}
+
 int main(int argc, char* argv[]){
     // common_function();
     // LOG_INFO("client functions . . .!");
+
+        
 
 #ifdef WINDOWS
     WSADATA wsaData;
@@ -110,36 +187,15 @@ int main(int argc, char* argv[]){
     print_family(paddr->sin_family);
     LOG_INFO("Address : %s", ipstr);
 
-    //data transfer
-    char *buf = NULL;
-    int pkt_len = 0;
-    int ids = 0;
-    request_type tp = PING;
-    char hostname[HOSTNAME_LEN];
-    status = gethostname(hostname, HOSTNAME_LEN);
 
-    int recvbytes = 0;
-    char recvbuf[MAX_UDP_PAYLOAD_LEN];
-    struct sockaddr peeraddr;
-    socklen_t peeraddrlen;
 
-    if (status < 0) {
-        err_quit("gethostname() failed");
-    }
-    for (;;){
-        pkt_len = prepare_pkt(&buf, tp, ids, hostname);
-        status = send(sockfd, buf, pkt_len, 0);
-        if(status < 0){
-            err_quit("send() failed with %d", status);
-        } else {
-            free(buf);
-            peeraddrlen = sizeof(struct sockaddr);
-            recvbytes = recvfrom(sockfd, recvbuf, MAX_UDP_PAYLOAD_LEN, 0, &peeraddr, &peeraddrlen);
-            parse_reply(&peeraddr, peeraddrlen, recvbuf, recvbytes);
-        }
-        ids++;
-        sleep_a(1);
-    }    
+    
+    
+    pthread_create(&send_thread, NULL, send_func, (void*) &sockfd);
+    // pthread_create(&receive_thread, NULL, receive_func, (void*) &sockfd);
+
+    signal(SIGINT, handle_signal);
+    
     
 #ifdef WINDOWS
     WSACleanup();
