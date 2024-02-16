@@ -17,6 +17,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <unordered_set>
 
 
 #ifdef WINDOWS
@@ -26,7 +27,7 @@
 static void print_usage() {
     printf("./client X.X.X.X[AF_INET]  Y.Y.Y.Y[AF_INET] \n");
     printf("X - client if addr\n");
-    printf("Y - server addr");
+    printf("Y - server addr\n");
 }
 
 int main(int argc, char* argv[]){
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]){
     }
 
     struct sockaddr addr;
-    struct sockaddr_in *paddr = &addr;
+    struct sockaddr_in *paddr = (sockaddr_in*)&addr;
     char ipstr[20];
     // paddr->sin_port = htons(6001);
     inet_pton(AF_INET, argv[1], &paddr->sin_addr);
@@ -85,7 +86,7 @@ int main(int argc, char* argv[]){
     
     //connect
     struct sockaddr serveraddr;
-    struct sockaddr_in *pservaddr = &serveraddr;
+    struct sockaddr_in *pservaddr = (sockaddr_in*)&serveraddr;
     pservaddr->sin_family = AF_INET;
     pservaddr->sin_port = htons(SOCK_TOOL_PORT);
     inet_pton(AF_INET, argv[2], &pservaddr->sin_addr);
@@ -112,7 +113,6 @@ int main(int argc, char* argv[]){
     //data transfer
     char *buf = NULL;
     int pkt_len = 0;
-    int i = 0;
     int ids = 0;
     request_type tp = PING;
     char hostname[HOSTNAME_LEN];

@@ -11,7 +11,9 @@ macro(print_all_variables)
     message(STATUS "print_all_variables------------------------------------------}")
 endmacro()
 
-set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall -Werror -std=c++14)
+set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall  -std=c++14")
+
+# print_all_variables ()
 
 # directories
 set (source_dir ${CMAKE_SOURCE_DIR}/src)
@@ -22,13 +24,13 @@ set (common_dir ${source_dir}/common)
 
 # files
 set (common_files
-     ${common_dir}/common.c)
+     ${common_dir}/common.cpp)
 
 set (client_files 
-     ${client_dir}/udp_client.c)
+     ${client_dir}/udp_client.cpp)
 
 set (server_files
-     ${server_dir}/udp_server.c)
+     ${server_dir}/udp_server.cpp)
 
 
 include_directories(${CMAKE_SOURCE_DIR}/include ${common_dir})

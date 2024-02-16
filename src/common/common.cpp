@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 
@@ -157,7 +158,7 @@ void parse_request(struct sockaddr *peeraddr, socklen_t peeraddrlen, char *buf, 
 
     request_pkt *req = (request_pkt*)buf;
     char ipstr[20];
-    struct sockaddr_in *paddr = peeraddr;
+    struct sockaddr_in *paddr = (sockaddr_in*)peeraddr;
     inet_ntop(paddr->sin_family, &paddr->sin_addr, ipstr, peeraddrlen);
 
     LOG_PKT("%d %s:%d   %s   %s  msgid:%d", nbytes,

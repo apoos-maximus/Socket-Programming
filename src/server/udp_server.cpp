@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <unordered_set>
 
 #ifdef WINDOWS
     #pragma comment(lib, "Ws2_32.lib")
@@ -59,7 +60,7 @@ int main(int argc, char* argv[]){
     }
 
     struct sockaddr addr;
-    struct sockaddr_in *paddr = &addr;
+    struct sockaddr_in *paddr = (sockaddr_in*)&addr;
     char ipstr[20];
     paddr->sin_port = htons(SOCK_TOOL_PORT);
     inet_pton(AF_INET, argv[1], &paddr->sin_addr);
