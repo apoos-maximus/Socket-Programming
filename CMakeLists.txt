@@ -26,15 +26,21 @@ set (common_dir ${source_dir}/common)
 set (common_files
      ${common_dir}/common.cpp)
 
-set (client_files 
+set (udp_client_files 
      ${client_dir}/udp_client.cpp)
-
-set (server_files
+set (udp_server_files
      ${server_dir}/udp_server.cpp)
 
+
+set (tcp_client_files 
+     ${client_dir}/tcp_client.cpp)
+set (tcp_server_files
+     ${server_dir}/tcp_server.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/include ${common_dir})
 
 # print_all_variables()
-add_executable(udp_client ${client_files} ${common_files})
-add_executable(udp_server ${server_files} ${common_files})
+add_executable(udp_client ${udp_client_files} ${common_files})
+add_executable(udp_server ${udp_server_files} ${common_files})
+add_executable(tcp_client ${tcp_client_files} ${common_files})
+add_executable(tcp_server ${tcp_server_files} ${common_files})
